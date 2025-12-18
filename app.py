@@ -34,11 +34,20 @@ scale = [
 ]
 
 if max_points:
+    step = 0.25
+
     st.subheader("Skala ocen")
-    for grade, p_min, p_max in scale:
+
+    for i, (grade, p_min, p_max) in enumerate(scale):
         pts_min = round_down_to_quarter(max_points * p_min / 100)
         pts_max = round_down_to_quarter(max_points * p_max / 100)
 
-        st.write(
-            f"**{grade}**: {pts_min}–{pts_max} pkt "
-        )
+        # sprawdź, czy następny zakres zaczyna się dokładnie tam, gdzie ten się kończy
+        if i < len(scale) - 1:
+            next_p_min = scale[i + 1][1]
+            next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
+
+            if pts_max == next_pts_min:
+                pts_max -= step
+
+        st.write(f"**{grade}**: {pts_min}–{pts_max} pkt")
