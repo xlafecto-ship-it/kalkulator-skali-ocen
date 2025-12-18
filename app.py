@@ -90,7 +90,7 @@ for i, (grade, p_min, p_max) in enumerate(scale):
         if pts_max == next_pts_min and (pts_max - step) >= pts_min:
             pts_max -= step
 
-pts_max = max(pts_max, pts_min)  # zabezpieczenie: nigdy "do" < "od"
+    pts_max = max(pts_max, pts_min)  # zabezpieczenie: nigdy "do" < "od"
 
 
     rows.append({
