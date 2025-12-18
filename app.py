@@ -65,9 +65,9 @@ for grade, p_min, p_max in scale:
                 break
 
     if found_grade in ("1", "1+"):
-st.error(f"Ocena: **{found_grade}**")
+        st.error(f"Ocena: **{found_grade}**")
     else:
-st.success(f"Ocena: **{found_grade}**")
+        st.success(f"Ocena: **{found_grade}**")
 
 st.caption(
         f"Procent: {percent:.2f}% | "
