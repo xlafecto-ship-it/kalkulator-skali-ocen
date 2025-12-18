@@ -63,16 +63,17 @@ for grade, p_min, p_max in scale:
             if percent >= p_min:
                 found_grade = grade
                 break
+result_box = st.empty()
+caption_box = st.empty()
+if found_grade in ("1", "1+"):
+    result_box.error(f"Ocena: **{found_grade}**")
+else:
+    result_box.success(f"Ocena: **{found_grade}**")
 
-    if found_grade in ("1", "1+"):
-        st.error(f"Ocena: **{found_grade}**")
-    else:
-        st.success(f"Ocena: **{found_grade}**")
+caption_box.caption(
+    f"Procent: {percent:.2f}% | Punkty (zaokr. w dół do 0.25): {earned_rounded}"
+)
 
-st.caption(
-        f"Procent: {percent:.2f}% | "
-        f"Punkty (zaokr. w dół do 0.25): {earned_rounded}"
-    )
 
 
 st.subheader("Skala ocen (tabela)")
