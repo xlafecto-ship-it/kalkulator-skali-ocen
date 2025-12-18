@@ -53,18 +53,19 @@ if max_points:
     earned_rounded = round_down_to_quarter(earned)
 
     found_grade = None
-
-for grade, p_min, p_max in scale:
-    if p_min <= percent <= p_max:
-        found_grade = grade
-        break
-
-# jeśli nie znaleziono, to bierzemy ostatnią ocenę, której próg min jest <= percent
+    for grade, p_min, p_max in scale:
+        if p_min <= percent <= p_max:
+            found_grade = grade
+            break
+            # jeśli trafiliśmy w lukę – bierzemy poprzednią ocenę
 if found_grade is None:
     for grade, p_min, p_max in reversed(scale):
         if percent >= p_min:
             found_grade = grade
             break
+
+        st.success(f"Ocena: **{found_grade}**")
+        st.caption(f"Procent: {percent:.2f}% | Punkty (zaokr. w dół do 0.25): {earned_rounded}")
 
     # --- Skala ocen (bez procentów, bez styków) ---
     st.subheader("Skala ocen")
