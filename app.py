@@ -49,14 +49,14 @@ earned = st.selectbox(
     possible_points
 )
 
-    percent = (earned / max_points) * 100
-    earned_rounded = round_down_to_quarter(earned)
+percent = (earned / max_points) * 100
+earned_rounded = round_down_to_quarter(earned)
 
-    found_grade = None
-    for grade, p_min, p_max in scale:
-        if p_min <= percent <= p_max:
-            found_grade = grade
-            break
+found_grade = None
+for grade, p_min, p_max in scale:
+    if p_min <= percent <= p_max:
+        found_grade = grade
+        break
 
     if found_grade is None:
         for grade, p_min, p_max in reversed(scale):
