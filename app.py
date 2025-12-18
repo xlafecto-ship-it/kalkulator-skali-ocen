@@ -2,7 +2,7 @@ import streamlit as st
 import math
 
 
-def round_down_to_quarter(value):
+def round_down_to_quarter(value: float) -> float:
     return math.floor(value * 4) / 4
 
 
@@ -14,6 +14,7 @@ max_points = st.number_input(
     step=1
 )
 
+# (ocena, %min, %max)
 scale = [
     ("1", 0, 25),
     ("1+", 26, 27),
@@ -30,23 +31,50 @@ scale = [
     ("5", 85, 91),
     ("5+", 92, 93),
     ("6-", 94, 94),
-    ("6", 95, 100)
+    ("6", 95, 100),
 ]
 
 if max_points:
     step = 0.25
 
+    # --- NOWE: sprawdzanie oceny po zdobytych punktach ---
+    st.subheader("Sprawdź ocenę")
+
+    earned = st.number_input(
+        "Zdobyte punkty",
+        min_value=0.0,
+        max_value=float(max_points),
+        step=0.25
+    )
+
+    percent = (earned / max_points) * 100 if max_points > 0 else 0.0
+
+    # Twoja zasada: zaokrąglanie w dół do 0.25 (opcjonalnie pokazujemy)
+    earned_rounded = round_down_to_quarter(earned)
+
+    found_grade = None
+    for grade, p_min, p_max in scale:
+        if p_min <= percent <= p_max:
+            found_grade = grade
+            break
+
+    if found_grade is None:
+        st.error(f"Brak oceny dla {percent:.2f}% (sprawdź skalę / progi).")
+    else:
+        st.success(f"Ocena: **{found_grade}**")
+        st.caption(f"Procent: {percent:.2f}% | Punkty (zaokr. w dół do 0.25): {earned_rounded}")
+
+    # --- Skala ocen (bez procentów, bez styków) ---
     st.subheader("Skala ocen")
 
     for i, (grade, p_min, p_max) in enumerate(scale):
         pts_min = round_down_to_quarter(max_points * p_min / 100)
         pts_max = round_down_to_quarter(max_points * p_max / 100)
 
-        # sprawdź, czy następny zakres zaczyna się dokładnie tam, gdzie ten się kończy
+        # usuń „styk” w wyświetlaniu (np. 4.25–4.25)
         if i < len(scale) - 1:
             next_p_min = scale[i + 1][1]
             next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
-
             if pts_max == next_pts_min:
                 pts_max -= step
 
