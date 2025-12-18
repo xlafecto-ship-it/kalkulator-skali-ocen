@@ -64,8 +64,8 @@ if found_grade is None:
             found_grade = grade
             break
 
-        st.success(f"Ocena: **{found_grade}**")
-        st.caption(f"Procent: {percent:.2f}% | Punkty (zaokr. w dół do 0.25): {earned_rounded}")
+st.success(f"Ocena: **{found_grade}**")
+st.caption(f"Procent: {percent:.2f}% | Punkty (zaokr. w dół do 0.25): {earned_rounded}")
 
     # --- Skala ocen (bez procentów, bez styków) ---
     st.subheader("Skala ocen")
