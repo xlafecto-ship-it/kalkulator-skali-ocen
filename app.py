@@ -87,8 +87,12 @@ st.subheader("Skala ocen (tabela)")
 rows = []
 for i, (grade, start) in enumerate(thresholds):
     end = thresholds[i + 1][1] if i < len(thresholds) - 1 else float(max_points)
-    if start < end:
-        rows.append({"Punkty od": start, "Punkty do": end, "Ocena": grade})
+
+    label = grade
+    if start == end:
+        label = f"{grade} (zlewa się)"
+
+    rows.append({"Punkty od": start, "Punkty do": end, "Ocena": label})
 
 
 df = pd.DataFrame(rows)
