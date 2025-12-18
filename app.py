@@ -101,6 +101,7 @@ df["Punkty od"] = df["Punkty od"].map(lambda x: f"{x:g}")
 df["Punkty do"] = df["Punkty do"].map(lambda x: f"{x:g}")
 
 df.index = [""] * len(df)
+df = df[["Punkty od", "Punkty do", "Ocena"]]
 st.table(df)
 
 
