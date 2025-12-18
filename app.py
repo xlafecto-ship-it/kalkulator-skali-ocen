@@ -40,5 +40,5 @@ if max_points:
         pts_max = round_down_to_quarter(max_points * p_max / 100)
 
         st.write(
-            f"**{grade}**: {pts_min}–{pts_max} pkt ({p_min}–{p_max}%)"
+            f"**{grade}**: {pts_min}–{pts_max} pkt "
         )
