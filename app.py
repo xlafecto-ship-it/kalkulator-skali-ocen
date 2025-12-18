@@ -39,12 +39,15 @@ if max_points:
 
     st.subheader("Sprawdź ocenę")
 
-    earned = st.number_input(
-        "Zdobyte punkty",
-        min_value=0.0,
-        max_value=float(max_points),
-        step=0.25
-    )
+possible_points = [
+    round_down_to_quarter(x / 4)
+    for x in range(0, int(max_points * 4) + 1)
+]
+
+earned = st.selectbox(
+    "Zdobyte punkty",
+    possible_points
+)
 
     percent = (earned / max_points) * 100
     earned_rounded = round_down_to_quarter(earned)
