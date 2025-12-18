@@ -68,17 +68,17 @@ st.success(f"Ocena: **{found_grade}**")
 st.caption(f"Procent: {percent:.2f}% | Punkty (zaokr. w dół do 0.25): {earned_rounded}")
 
     # --- Skala ocen (bez procentów, bez styków) ---
-    st.subheader("Skala ocen")
+st.subheader("Skala ocen")
 
-    for i, (grade, p_min, p_max) in enumerate(scale):
-        pts_min = round_down_to_quarter(max_points * p_min / 100)
-        pts_max = round_down_to_quarter(max_points * p_max / 100)
+for i, (grade, p_min, p_max) in enumerate(scale):
+    pts_min = round_down_to_quarter(max_points * p_min / 100)
+    pts_max = round_down_to_quarter(max_points * p_max / 100)
 
         # usuń „styk” w wyświetlaniu (np. 4.25–4.25)
-        if i < len(scale) - 1:
-            next_p_min = scale[i + 1][1]
-            next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
-            if pts_max == next_pts_min:
-                pts_max -= step
+    if i < len(scale) - 1:
+        next_p_min = scale[i + 1][1]
+        next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
+        if pts_max == next_pts_min:
+             pts_max -= step
 
-        st.write(f"**{grade}**: {pts_min}–{pts_max} pkt")
+     st.write(f"**{grade}**: {pts_min}–{pts_max} pkt")
