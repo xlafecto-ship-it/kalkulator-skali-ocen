@@ -33,6 +33,10 @@ scale = [
     ("6-", 94, 94),
     ("6", 95, 100),
 ]
+thresholds = []
+for grade, p_min, p_max in scale:
+    pts_min = round_down_to_quarter(max_points * p_min / 100)
+    thresholds.append((grade, pts_min))
 
 if max_points:
     step = 0.25
@@ -52,17 +56,20 @@ earned = st.selectbox(
 percent = (earned / max_points) * 100
 earned_rounded = round_down_to_quarter(earned)
 
-found_grade = None
-for grade, p_min, p_max in scale:
-    if p_min <= percent <= p_max:
+earned_rounded = round_down_to_quarter(earned)
+
+found_grade = thresholds[0][0]  # domyślnie najniższa
+for i in range(len(thresholds) - 1):
+    grade, start = thresholds[i]
+    _, next_start = thresholds[i + 1]
+
+    if start <= earned_rounded < next_start:
         found_grade = grade
         break
+else:
+    # jeśli nie złapało żadnego przedziału, to znaczy że jesteśmy w ostatnim
+    found_grade = thresholds[-1][0]
 
-    if found_grade is None:
-        for grade, p_min, p_max in reversed(scale):
-            if percent >= p_min:
-                found_grade = grade
-                break
 result_box = st.empty()
 caption_box = st.empty()
 if found_grade in ("1", "1+"):
@@ -79,18 +86,12 @@ caption_box.caption(
 st.subheader("Skala ocen (tabela)")
 
 rows = []
-for i, (grade, p_min, p_max) in enumerate(scale):
-    pts_min = round_down_to_quarter(max_points * p_min / 100)
-    pts_max = round_down_to_quarter(max_points * p_max / 100)
-
-    # usuń „styk” tylko w prezentacji
-    if i < len(scale) - 1:
-        next_p_min = scale[i + 1][1]
-        next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
-        if pts_max == next_pts_min and (pts_max - step) >= pts_min:
-            pts_max -= step
-
-    pts_max = max(pts_max, pts_min)  # zabezpieczenie: nigdy "do" < "od"
+for i, (grade, start) in enumerate(thresholds):
+    if i < len(thresholds) - 1:
+        end = thresholds[i + 1][1]
+        rows.append({"Punkty od": start, "Punkty do": end, "Ocena": grade})
+    else:
+        rows.append({"Punkty od": start, "Punkty do": f"{max_points}", "Ocena": grade})
 
 
     rows.append({
