@@ -82,30 +82,23 @@ caption_box.caption(
 )
 
 
-
 st.subheader("Skala ocen (tabela)")
 
 rows = []
 for i, (grade, start) in enumerate(thresholds):
     if i < len(thresholds) - 1:
         end = thresholds[i + 1][1]
-        rows.append({"Punkty od": start, "Punkty do": end, "Ocena": grade})
     else:
-        rows.append({"Punkty od": start, "Punkty do": f"{max_points}", "Ocena": grade})
+        end = float(max_points)
 
-
-    rows.append({
-        "Ocena": grade,
-        "Punkty od": pts_min,
-        "Punkty do": pts_max,
-    })
+    rows.append({"Punkty od": start, "Punkty do": end, "Ocena": grade})
 
 df = pd.DataFrame(rows)
 df["Punkty od"] = df["Punkty od"].map(lambda x: f"{x:g}")
 df["Punkty do"] = df["Punkty do"].map(lambda x: f"{x:g}")
-
-df.index = [""] * len(df)
 df = df[["Punkty od", "Punkty do", "Ocena"]]
+df.index = [""] * len(df)
 st.table(df)
+
 
 
