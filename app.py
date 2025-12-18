@@ -96,6 +96,7 @@ df = pd.DataFrame(rows)
 df["Punkty od"] = df["Punkty od"].map(lambda x: f"{x:g}")
 df["Punkty do"] = df["Punkty do"].map(lambda x: f"{x:g}")
 
+df.index = [""] * len(df)
 st.table(df)
 
 
