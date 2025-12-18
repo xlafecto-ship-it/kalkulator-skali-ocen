@@ -15,22 +15,22 @@ max_points = st.number_input(
 )
 
 scale = [
-    ("1 (niedostateczny)", 0, 25),
-    ("1+ (niedostateczny plus)", 26, 27),
-    ("2- (dopuszczający minus)", 28, 29),
-    ("2 (dopuszczający)", 30, 45),
-    ("2+ (dopuszczający plus)", 46, 47),
-    ("3- (dostateczny minus)", 48, 49),
-    ("3 (dostateczny)", 50, 65),
-    ("3+ (dostateczny plus)", 66, 67),
-    ("4- (dobry minus)", 68, 69),
-    ("4 (dobry)", 70, 80),
-    ("4+ (dobry plus)", 81, 82),
-    ("5- (bardzo dobry minus)", 83, 84),
-    ("5 (bardzo dobry)", 85, 91),
-    ("5+ (bardzo dobry plus)", 92, 93),
-    ("6- (celujący minus)", 94, 99),
-    ("6 (celujący)", 100, 100),
+    ("1", 0, 25),
+    ("1+", 26, 27),
+    ("2-", 28, 29),
+    ("2", 30, 45),
+    ("2+", 46, 47),
+    ("3-", 48, 49),
+    ("3", 50, 65),
+    ("3+", 66, 67),
+    ("4-", 68, 69),
+    ("4", 70, 80),
+    ("4+", 81, 82),
+    ("5-", 83, 84),
+    ("5", 85, 91),
+    ("5+", 92, 93),
+    ("6-", 94, 94),
+    ("6", 100, 100)
 ]
 
 if max_points:
