@@ -37,7 +37,6 @@ scale = [
 if max_points:
     step = 0.25
 
-    # --- NOWE: sprawdzanie oceny po zdobytych punktach ---
     st.subheader("Sprawdź ocenę")
 
     earned = st.number_input(
@@ -47,9 +46,7 @@ if max_points:
         step=0.25
     )
 
-    percent = (earned / max_points) * 100 if max_points > 0 else 0.0
-
-    # Twoja zasada: zaokrąglanie w dół do 0.25 (opcjonalnie pokazujemy)
+    percent = (earned / max_points) * 100
     earned_rounded = round_down_to_quarter(earned)
 
     found_grade = None
@@ -57,28 +54,31 @@ if max_points:
         if p_min <= percent <= p_max:
             found_grade = grade
             break
-            # jeśli trafiliśmy w lukę – bierzemy poprzednią ocenę
-if found_grade is None:
-    for grade, p_min, p_max in reversed(scale):
-        if percent >= p_min:
-            found_grade = grade
-            break
 
-st.success(f"Ocena: **{found_grade}**")
-st.caption(f"Procent: {percent:.2f}% | Punkty (zaokr. w dół do 0.25): {earned_rounded}")
+    if found_grade is None:
+        for grade, p_min, p_max in reversed(scale):
+            if percent >= p_min:
+                found_grade = grade
+                break
 
-    # --- Skala ocen (bez procentów, bez styków) ---
-st.subheader("Skala ocen")
+    st.success(f"Ocena: **{found_grade}**")
+    st.caption(
+        f"Procent: {percent:.2f}% | "
+        f"Punkty (zaokr. w dół do 0.25): {earned_rounded}"
+    )
 
-for i, (grade, p_min, p_max) in enumerate(scale):
-    pts_min = round_down_to_quarter(max_points * p_min / 100)
-    pts_max = round_down_to_quarter(max_points * p_max / 100)
+    st.subheader("Skala ocen")
 
-        # usuń „styk” w wyświetlaniu (np. 4.25–4.25)
-    if i < len(scale) - 1:
-        next_p_min = scale[i + 1][1]
-        next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
-        if pts_max == next_pts_min:
-             pts_max -= step
+    for i, (grade, p_min, p_max) in enumerate(scale):
+        pts_min = round_down_to_quarter(max_points * p_min / 100)
+        pts_max = round_down_to_quarter(max_points * p_max / 100)
 
-     st.write(f"**{grade}**: {pts_min}–{pts_max} pkt")
+        if i < len(scale) - 1:
+            next_p_min = scale[i + 1][1]
+            next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
+
+            if pts_max == next_pts_min:
+                pts_max -= step
+
+        st.write(f"**{grade}**: {pts_min}–{pts_max} pkt")
+
