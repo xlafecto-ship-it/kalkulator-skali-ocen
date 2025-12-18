@@ -1,6 +1,6 @@
 import streamlit as st
 import math
-
+import pandas as pd
 
 def round_down_to_quarter(value: float) -> float:
     return math.floor(value * 4) / 4
@@ -72,18 +72,33 @@ if max_points:
     )
 
 
-    st.subheader("Skala ocen")
+st.subheader("Skala ocen (tabela)")
 
-    for i, (grade, p_min, p_max) in enumerate(scale):
-        pts_min = round_down_to_quarter(max_points * p_min / 100)
-        pts_max = round_down_to_quarter(max_points * p_max / 100)
+rows = []
+for i, (grade, p_min, p_max) in enumerate(scale):
+    pts_min = round_down_to_quarter(max_points * p_min / 100)
+    pts_max = round_down_to_quarter(max_points * p_max / 100)
 
-        if i < len(scale) - 1:
-            next_p_min = scale[i + 1][1]
-            next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
+    # usuń „styk” tylko w prezentacji
+    if i < len(scale) - 1:
+        next_p_min = scale[i + 1][1]
+        next_pts_min = round_down_to_quarter(max_points * next_p_min / 100)
+        if pts_max == next_pts_min:
+            pts_max -= step
 
-            if pts_max == next_pts_min:
-                pts_max -= step
+    rows.append({
+        "Ocena": grade,
+        "Punkty od": pts_min,
+        "Punkty do": pts_max,
+    })
 
-        st.write(f"**{grade}**: {pts_min}–{pts_max} pkt")
+df = pd.DataFrame(rows)
+df["Punkty od"] = df["Punkty od"].map(lambda x: f"{x:g}")
+df["Punkty do"] = df["Punkty do"].map(lambda x: f"{x:g}")
+
+st.dataframe(
+    df,
+    hide_index=True,
+    use_container_width=True
+)
 
