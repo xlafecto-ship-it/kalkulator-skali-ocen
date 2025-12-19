@@ -2,8 +2,8 @@ import streamlit as st
 import math
 import pandas as pd
 
-def round_down_to_quarter(value: float) -> float:
-    return math.floor(value * 4) / 4
+def round_to_nearest_quarter(value):
+    return round(value * 4) / 4
 
 
 st.title("Kalkulator skali ocen")
@@ -54,9 +54,10 @@ earned = st.selectbox(
 )
 
 percent = (earned / max_points) * 100
-earned_rounded = round_down_to_quarter(earned)
+earned_rounded = round_to_nearest_quarter(earned)
 
-earned_rounded = round_down_to_quarter(earned)
+
+earned_rounded = round_to_nearest_quarter(earned)
 
 found_grade = thresholds[0][0]  # domyślnie najniższa
 for i in range(len(thresholds) - 1):
