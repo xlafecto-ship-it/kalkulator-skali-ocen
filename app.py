@@ -44,7 +44,7 @@ if max_points:
     st.subheader("Sprawdź ocenę")
 
 possible_points = [
-    round_down_to_quarter(x / 4)
+    round_to_nearest_quarter(x / 4)
     for x in range(0, int(max_points * 4) + 1)
 ]
 
@@ -54,9 +54,6 @@ earned = st.selectbox(
 )
 
 percent = (earned / max_points) * 100
-earned_rounded = round_to_nearest_quarter(earned)
-
-
 earned_rounded = round_to_nearest_quarter(earned)
 
 found_grade = thresholds[0][0]  # domyślnie najniższa
