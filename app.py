@@ -2,6 +2,12 @@ import streamlit as st
 import math
 import pandas as pd
 
+def round_down_to_quarter(value):
+    return math.floor(value * 4) / 4
+
+def round_up_to_quarter(value):
+    return math.ceil(value * 4) / 4
+
 def round_to_nearest_quarter(value):
     return round(value * 4) / 4
 
@@ -33,20 +39,19 @@ scale = [
     ("6-", 94, 94),
     ("6", 95, 100),
 ]
+# thresholds trzymamy jako (ocena, start_w_punktach, p_min, p_max)
 thresholds = []
 for grade, p_min, p_max in scale:
-    pts_min = round_to_nearest_quarter(max_points * p_min / 100)
-    thresholds.append((grade, pts_min))
+    start_pts = round_up_to_quarter(max_points * (p_min / 100))
+    end_pts   = round_down_to_quarter(max_points * (p_max / 100))
+    thresholds.append((grade, start_pts, end_pts, p_min, p_max))
 
 if max_points:
     step = 0.25
 
     st.subheader("Sprawdź ocenę")
 
-possible_points = [
-    round_to_nearest_quarter(x / 4)
-    for x in range(0, int(max_points * 4) + 1)
-]
+possible_points = [x / 4 for x in range(0, int(max_points * 4) + 1)]
 
 earned = st.selectbox(
     "Zdobyte punkty",
@@ -56,17 +61,15 @@ earned = st.selectbox(
 percent = (earned / max_points) * 100
 earned_rounded = round_to_nearest_quarter(earned)
 
-found_grade = thresholds[0][0]  # domyślnie najniższa
-for i in range(len(thresholds) - 1):
-    grade, start = thresholds[i]
-    _, next_start = thresholds[i + 1]
-
-    if start <= earned_rounded < next_start:
+found_grade = None
+for grade, start_pts, end_pts, p_min, p_max in thresholds:
+    if p_min <= percent <= p_max:
         found_grade = grade
         break
 else:
-    # jeśli nie złapało żadnego przedziału, to znaczy że jesteśmy w ostatnim
-    found_grade = thresholds[-1][0]
+    if found_grade is None:
+        found_grade = thresholds[-1][0]
+
 
 result_box = st.empty()
 caption_box = st.empty()
@@ -82,18 +85,9 @@ caption_box.caption(
 
 st.subheader("Skala ocen (tabela)")
 
-step = 0.25
 rows = []
-
-for i, (grade, start) in enumerate(thresholds):
-    if i < len(thresholds) - 1:
-        end_exclusive = thresholds[i + 1][1]
-        end_display = end_exclusive - step
-    else:
-        # ostatnia ocena: do max_points normalnie
-        end_display = float(max_points)
-
-    rows.append({"Punkty od": start, "Punkty do": end_display, "Ocena": grade})
+for grade, start_pts, end_pts, p_min, p_max in thresholds:
+    rows.append({"Punkty od": start_pts, "Punkty do": end_pts, "Ocena": grade})
 
 df = pd.DataFrame(rows)
 df["Punkty od"] = df["Punkty od"].map(lambda x: f"{x:g}")
@@ -101,5 +95,4 @@ df["Punkty do"] = df["Punkty do"].map(lambda x: f"{x:g}")
 df = df[["Punkty od", "Punkty do", "Ocena"]]
 df.index = [""] * len(df)
 st.table(df)
-
 
