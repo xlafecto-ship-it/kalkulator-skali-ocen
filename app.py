@@ -76,22 +76,24 @@ else:
     result_box.success(f"Ocena: **{found_grade}**")
 
 caption_box.caption(
-    f"Procent: {percent:.2f}% | Punkty (zaokr. w dół do 0.25): {earned_rounded}"
+    f"Procent: {percent:.2f}% | Punkty (zaokr do 0.25): {earned_rounded}"
 )
 
 
 st.subheader("Skala ocen (tabela)")
 
+step = 0.25
 rows = []
+
 for i, (grade, start) in enumerate(thresholds):
-    end = thresholds[i + 1][1] if i < len(thresholds) - 1 else float(max_points)
+    if i < len(thresholds) - 1:
+        end_exclusive = thresholds[i + 1][1]
+        end_display = end_exclusive - step
+    else:
+        # ostatnia ocena: do max_points normalnie
+        end_display = float(max_points)
 
-    label = grade
-    if start == end:
-        label = f"{grade} (zlewa się)"
-
-    rows.append({"Punkty od": start, "Punkty do": end, "Ocena": label})
-
+    rows.append({"Punkty od": start, "Punkty do": end_display, "Ocena": grade})
 
 df = pd.DataFrame(rows)
 df["Punkty od"] = df["Punkty od"].map(lambda x: f"{x:g}")
@@ -99,6 +101,5 @@ df["Punkty do"] = df["Punkty do"].map(lambda x: f"{x:g}")
 df = df[["Punkty od", "Punkty do", "Ocena"]]
 df.index = [""] * len(df)
 st.table(df)
-
 
 
