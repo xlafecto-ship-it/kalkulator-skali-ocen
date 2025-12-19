@@ -35,7 +35,7 @@ scale = [
 ]
 thresholds = []
 for grade, p_min, p_max in scale:
-    pts_min = round_down_to_quarter(max_points * p_min / 100)
+    pts_min = round_to_nearest_quarter(max_points * p_min / 100)
     thresholds.append((grade, pts_min))
 
 if max_points:
