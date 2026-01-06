@@ -48,6 +48,7 @@ def build_thresholds_point_first(max_points: float):
         start_pts = round_up_to_quarter(max_points * (p_min / 100))
         end_pts   = round_down_to_quarter(max_points * (p_max / 100))
         raw.append((grade, start_pts, end_pts, p_min, p_max))
+    
 
     # Sort by start just in case (should already be sorted)
     raw.sort(key=lambda x: x[1])
@@ -75,17 +76,32 @@ def build_thresholds_point_first(max_points: float):
     return fixed
 
 def grade_for_points(earned_pts_q: float, thresholds):
-    # thresholds are inclusive ranges [start,end]
+    if not thresholds:
+        return "N/A"
+
+    # Normalne trafienie w próg
     for grade, start_pts, end_pts, *_ in thresholds:
         if start_pts <= earned_pts_q <= end_pts:
             return grade
 
-    # Fallbacks (below first range or above last range)
-    if not thresholds:
-        return "N/A"
-    if earned_pts_q < thresholds[0][1]:
-        return thresholds[0][0]
-    return thresholds[-1][0]
+    first_grade, first_start, *_ = thresholds[0]
+    last_grade, _, last_end, *_ = thresholds[-1]
+
+    # Poniżej skali
+    if earned_pts_q < first_start:
+        return first_grade
+
+    # Powyżej skali
+    if earned_pts_q > last_end:
+        return last_grade
+
+    # 🔼 LUKA → zaokrąglenie w górę
+    for grade, start_pts, *_ in thresholds:
+        if earned_pts_q < start_pts:
+            return grade
+
+    # Teoretycznie nieosiągalne
+    return last_grade
 
 # ----------------------------
 # UI
