@@ -202,7 +202,6 @@ with res_col2:
         unsafe_allow_html=True
     )
 
-st.caption(f"Punkty (ćwiartki): {earned_q:g} / {max_points:g}")
 
 # ---------- TABLE ----------
 st.subheader("Skala ocen")
