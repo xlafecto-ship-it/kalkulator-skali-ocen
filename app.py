@@ -20,7 +20,7 @@ def round_to_nearest_quarter(value: float) -> float:
 # ----------------------------
 def parse_points_expression(expr: str) -> float | None:
     """
-    Parsuje np. '2,25+4,5+1+0,25'
+    Parsuje np. '3+5+2,25+4,5'
     Przecinek = separator dziesiętny
     """
     if not expr:
@@ -148,15 +148,20 @@ with col1:
 
 with col2:
     expr_input = st.text_input(
-        "Suma zadań (np. 2,25+4,5+1)",
+        "Suma zadań (np. 3+5+2,25+4,5)",
         help="Używaj przecinków jako separatora dziesiętnego"
     )
 
 parsed_sum = parse_points_expression(expr_input)
 
+# 🔽 NOWE: pokazanie wyniku sumowania
+sum_box = st.empty()
+
 if parsed_sum is not None:
+    sum_box.info(f"Suma zadań: **{parsed_sum:g} pkt**")
     earned_raw = min(parsed_sum, max_points)
 else:
+    sum_box.empty()
     earned_raw = float(earned_select)
 
 earned_q = round_to_nearest_quarter(earned_raw)
@@ -220,7 +225,3 @@ with st.expander("Diagnostyka (opcjonalnie)"):
         last_end = thresholds[-1][2]
         st.write(f"Najniższy próg zaczyna się od: {first_start:g}")
         st.write(f"Najwyższy próg kończy się na: {last_end:g}")
-        st.write(
-            "Uwaga: jeśli max_points nie jest wielokrotnością 0.25, "
-            "skala nadal działa, ale wybór punktów jest ograniczony do ćwiartek."
-        )
