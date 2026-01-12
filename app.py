@@ -167,7 +167,7 @@ with col1:
     earned_select = st.selectbox("Zdobyte punkty", possible_points)
 
 with col2:
-    expr_input = st.text_input("Suma punktów (np. 2+1,5+0,25)")
+    expr_input = st.text_input("Kalkulator punktów (np. 2+3+2,5)")
 
 parsed_sum = parse_points_expression(expr_input)
 
