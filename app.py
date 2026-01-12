@@ -158,17 +158,16 @@ sum_box = st.empty()
 
 if parsed_sum is not None:
     sum_box.markdown(
-    f"""
-    <div class="center-alert">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-sum_box.info(f"Suma punktów: **{parsed_sum:g} / {max_points:g}**")
-
+        """
+        <div class="center-alert"></div>
+        """,
+        unsafe_allow_html=True
+    )
+    sum_box.info(f"Suma punktów: **{parsed_sum:g} / {max_points:g}**")
     earned_raw = min(parsed_sum, max_points)
 else:
     earned_raw = float(earned_select)
+
 
 earned_q = round_to_nearest_quarter(earned_raw)
 found_grade = grade_for_points(earned_q, thresholds)
