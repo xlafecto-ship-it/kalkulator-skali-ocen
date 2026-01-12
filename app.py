@@ -148,7 +148,7 @@ with col1:
 
 with col2:
     expr_input = st.text_input(
-        "Suma zadań (np. 3+5+2,25+4,5)",
+        "Suma punktow",
         help="Używaj przecinków jako separatora dziesiętnego"
     )
 
@@ -158,7 +158,7 @@ parsed_sum = parse_points_expression(expr_input)
 sum_box = st.empty()
 
 if parsed_sum is not None:
-    sum_box.info(f"Suma zadań: **{parsed_sum:g} pkt**")
+    sum_box.info(f"Suma punkow: **{parsed_sum:g} pkt**")
     earned_raw = min(parsed_sum, max_points)
 else:
     sum_box.empty()
