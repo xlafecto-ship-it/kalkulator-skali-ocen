@@ -118,6 +118,16 @@ def grade_for_points(earned_pts_q: float, thresholds):
     return last_grade
 
 # ----------------------------
+# NEW: percent formatting (no trailing .00)
+# ----------------------------
+def percent_info_str(earned_q: float, max_points: float) -> str:
+    if not max_points:
+        return "0%"
+    percent = (earned_q / max_points) * 100
+    # :g usuwa zbędne zera (np. 75.00 -> 75, 75.50 -> 75.5)
+    return f"{percent:g}%"
+
+# ----------------------------
 # UI
 # ----------------------------
 st.title("Kalkulator skali ocen (wierność punktom / ćwiartkom)")
@@ -154,33 +164,35 @@ with col2:
 
 parsed_sum = parse_points_expression(expr_input)
 
-# 🔽 NOWE: pokazanie wyniku sumowania
+# 🔽 ZMIANA 1: pokazanie sumy jako "wynik / max_points"
 sum_box = st.empty()
 
 if parsed_sum is not None:
-    sum_box.info(f"Suma punkow: **{parsed_sum:g} pkt**")
-    earned_raw = min(parsed_sum, max_points)
+    shown_sum = min(parsed_sum, max_points)  # co faktycznie wchodzi do obliczeń
+    sum_box.info(f"Suma punkow: **{parsed_sum:g} / {max_points:g} pkt**")
+    earned_raw = shown_sum
 else:
     sum_box.empty()
     earned_raw = float(earned_select)
 
 earned_q = round_to_nearest_quarter(earned_raw)
 
-percent = (earned_q / max_points) * 100 if max_points else 0.0
 found_grade = grade_for_points(earned_q, thresholds)
+percent_str = percent_info_str(earned_q, max_points)
 
-result_box = st.empty()
-caption_box = st.empty()
+# 🔽 ZMIANA 2: wynik w dwóch kolumnach: ocena | procent
+res_col1, res_col2 = st.columns(2)
 
-if found_grade in ("1", "1+"):
-    result_box.error(f"Ocena: **{found_grade}**")
-else:
-    result_box.success(f"Ocena: **{found_grade}**")
+with res_col1:
+    if found_grade in ("1", "1+"):
+        st.error(f"Ocena: **{found_grade}**")
+    else:
+        st.success(f"Ocena: **{found_grade}**")
 
-caption_box.caption(
-    f"Punkty (ćwiartki): {earned_q:g} / {max_points:g} | "
-    f"Procent (informacyjnie): {percent:.2f}%"
-)
+with res_col2:
+    st.info(f"Procent (info): **{percent_str}**")
+
+st.caption(f"Punkty (ćwiartki): {earned_q:g} / {max_points:g}")
 
 st.subheader("Skala ocen (tabela: punkty → ocena)")
 
