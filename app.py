@@ -3,9 +3,9 @@ import math
 import pandas as pd
 import re
 
-# ----------------------------
+# ============================
 # Helpers: quarter-point grid
-# ----------------------------
+# ============================
 def round_down_to_quarter(value: float) -> float:
     return math.floor(value * 4) / 4
 
@@ -15,15 +15,14 @@ def round_up_to_quarter(value: float) -> float:
 def round_to_nearest_quarter(value: float) -> float:
     return round(value * 4) / 4
 
-# ----------------------------
-# Teacher input parser (comma decimals)
-# ----------------------------
+# ============================
+# Teacher input parser
+# ============================
 def parse_points_expression(expr: str) -> float | None:
     if not expr:
         return None
 
     expr = expr.replace(" ", "")
-
     if not re.fullmatch(r"[0-9+,]+", expr):
         return None
 
@@ -32,9 +31,9 @@ def parse_points_expression(expr: str) -> float | None:
     except ValueError:
         return None
 
-# ----------------------------
-# Scale definition (percent-based)
-# ----------------------------
+# ============================
+# Scale definition
+# ============================
 SCALE = [
     ("1",   0, 25),
     ("1+", 26, 27),
@@ -54,14 +53,14 @@ SCALE = [
     ("6",  95, 100),
 ]
 
-# ----------------------------
-# Build POINT thresholds
-# ----------------------------
+# ============================
+# Thresholds
+# ============================
 def build_thresholds_point_first(max_points: float):
     raw = []
     for grade, p_min, p_max in SCALE:
         start_pts = round_up_to_quarter(max_points * p_min / 100)
-        end_pts   = round_down_to_quarter(max_points * p_max / 100)
+        end_pts = round_down_to_quarter(max_points * p_max / 100)
         raw.append((grade, start_pts, end_pts, p_min, p_max))
 
     raw.sort(key=lambda x: x[1])
@@ -72,10 +71,8 @@ def build_thresholds_point_first(max_points: float):
     for grade, start_pts, end_pts, p_min, p_max in raw:
         if start_pts > end_pts:
             continue
-
         if last_end is not None and start_pts <= last_end:
             start_pts = round_up_to_quarter(last_end + 0.25)
-
         if start_pts > end_pts:
             continue
 
@@ -85,66 +82,75 @@ def build_thresholds_point_first(max_points: float):
     return fixed
 
 def grade_for_points(earned_q: float, thresholds):
-    for grade, start_pts, end_pts, *_ in thresholds:
-        if start_pts <= earned_q <= end_pts:
+    for grade, start, end, *_ in thresholds:
+        if start <= earned_q <= end:
             return grade
-
     if earned_q < thresholds[0][1]:
         return thresholds[0][0]
-
     return thresholds[-1][0]
 
-# ----------------------------
+# ============================
 # Percent formatting
-# ----------------------------
+# ============================
 def percent_info_str(earned_q: float, max_points: float) -> str:
     if not max_points:
         return "0%"
     return f"{(earned_q / max_points) * 100:g}%"
 
-# ----------------------------
+# ============================
 # UI
-# ----------------------------
-st.title("Kalkulator skali ocen (ćwiartki punktów)")
+# ============================
+st.title("Sprawdź ocenę")
 
-# 🎨 CSS – fioletowy box procentów
+# ---------- CSS ----------
 st.markdown(
     """
     <style>
-    /* Fioletowy box procentu */
-    .percent-box {
-        background-color: #6f42c1;
-        color: white;
-        padding: 1rem;
+    .result-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 70px;
         border-radius: 0.6rem;
         font-weight: 600;
         text-align: center;
+        color: white;
+        margin-top: 0.25rem;
     }
 
-    /* Wyśrodkowanie tekstu w alertach Streamlit */
-    .center-alert > div {
-        text-align: center;
-        font-weight: 600;
+    .box-sum {
+        background-color: #1f4b6e;
+    }
+
+    .box-grade {
+        background-color: #1f6e3f;
+    }
+
+    .box-grade-fail {
+        background-color: #8b1e1e;
+    }
+
+    .box-percent {
+        background-color: #6f42c1;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
+# ---------- Inputs ----------
 max_points = st.number_input(
     "Maksymalna liczba punktów",
     min_value=1.0,
     step=1.0,
-    value=1.0,
+    value=25.0
 )
 
 thresholds = build_thresholds_point_first(max_points)
 
-st.subheader("Sprawdź ocenę")
+col1, col2 = st.columns(2)
 
 possible_points = [x / 4 for x in range(0, int(max_points * 4) + 1)]
-
-col1, col2 = st.columns(2)
 
 with col1:
     earned_select = st.selectbox("Zdobyte punkty", possible_points)
@@ -154,41 +160,43 @@ with col2:
 
 parsed_sum = parse_points_expression(expr_input)
 
-sum_box = st.empty()
-
+# ---------- SUMA ----------
 if parsed_sum is not None:
-    sum_box.markdown(
-        """
-        <div class="center-alert"></div>
+    st.markdown(
+        f"""
+        <div class="result-box box-sum">
+            Suma punktów: {parsed_sum:g} / {max_points:g}
+        </div>
         """,
         unsafe_allow_html=True
     )
-    sum_box.info(f"Suma punktów: **{parsed_sum:g} / {max_points:g}**")
     earned_raw = min(parsed_sum, max_points)
 else:
     earned_raw = float(earned_select)
-
 
 earned_q = round_to_nearest_quarter(earned_raw)
 found_grade = grade_for_points(earned_q, thresholds)
 percent_str = percent_info_str(earned_q, max_points)
 
-# 🧾 Wynik: ocena | procent
+# ---------- RESULT ----------
 res_col1, res_col2 = st.columns(2)
 
 with res_col1:
-    st.markdown('<div class="center-alert">', unsafe_allow_html=True)
-    if found_grade in ("1", "1+"):
-        st.error(f"Ocena: **{found_grade}**")
-    else:
-        st.success(f"Ocena: **{found_grade}**")
-    st.markdown('</div>', unsafe_allow_html=True)
+    grade_class = "box-grade-fail" if found_grade in ("1", "1+") else "box-grade"
+    st.markdown(
+        f"""
+        <div class="result-box {grade_class}">
+            Ocena: {found_grade}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 with res_col2:
     st.markdown(
         f"""
-        <div class="percent-box">
-            Procent: <strong>{percent_str}</strong>
+        <div class="result-box box-percent">
+            Procent: {percent_str}
         </div>
         """,
         unsafe_allow_html=True
@@ -196,9 +204,7 @@ with res_col2:
 
 st.caption(f"Punkty (ćwiartki): {earned_q:g} / {max_points:g}")
 
-# ----------------------------
-# Table
-# ----------------------------
+# ---------- TABLE ----------
 st.subheader("Skala ocen")
 
 rows = [
@@ -206,7 +212,7 @@ rows = [
         "Punkty od": f"{start:g}",
         "Punkty do": f"{end:g}",
         "Ocena": grade,
-        "Procent (źródło)": f"{p_min}–{p_max}%",
+        "Procent": f"{p_min}–{p_max}%",
     }
     for grade, start, end, p_min, p_max in thresholds
 ]
