@@ -215,16 +215,8 @@ with res_col2:
 
 
 # ---------- TABLE ----------
-st.subheader("Skala ocen")
 st.markdown(
-    """
-    <style>
-    /* centruj tylko główny tytuł */
-    h1 {
-        text-align: center;
-    }
-    </style>
-    """,
+    "<h2 style='text-align: center;'>Skala ocen</h2>",
     unsafe_allow_html=True
 )
 
