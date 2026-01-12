@@ -100,7 +100,18 @@ def percent_info_str(earned_q: float, max_points: float) -> str:
 # ============================
 # UI
 # ============================
-st.title("Sprawdź ocenę")
+st.title("Kalkulator ocen")
+st.markdown(
+    """
+    <style>
+    /* centruj tylko główny tytuł */
+    h1 {
+        text-align: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # ---------- CSS ----------
 st.markdown(
