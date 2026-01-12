@@ -216,6 +216,17 @@ with res_col2:
 
 # ---------- TABLE ----------
 st.subheader("Skala ocen")
+st.markdown(
+    """
+    <style>
+    /* centruj tylko główny tytuł */
+    h1 {
+        text-align: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 rows = [
     {
