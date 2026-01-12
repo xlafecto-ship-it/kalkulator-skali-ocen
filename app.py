@@ -153,9 +153,14 @@ st.markdown(
 max_points = st.number_input(
     "Maksymalna liczba punktów",
     min_value=1.0,
-    step=1.0,
-    value=25.0
+    value=None,
+    placeholder="np. 25"
 )
+
+if max_points is None:
+    st.info("Wpisz maksymalną liczbę punktów, aby kontynuować.")
+    st.stop()
+
 
 thresholds = build_thresholds_point_first(max_points)
 
