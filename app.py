@@ -19,31 +19,21 @@ def round_to_nearest_quarter(value: float) -> float:
 # Teacher input parser (comma decimals)
 # ----------------------------
 def parse_points_expression(expr: str) -> float | None:
-    """
-    Parsuje np. '3+5+2,25+4,5'
-    Przecinek = separator dziesiętny
-    """
     if not expr:
         return None
 
     expr = expr.replace(" ", "")
 
-    # Dozwolone tylko cyfry, + i przecinki
     if not re.fullmatch(r"[0-9+,]+", expr):
         return None
 
     try:
-        parts = []
-        for part in expr.split("+"):
-            if part == "":
-                continue
-            parts.append(float(part.replace(",", ".")))
-        return sum(parts)
+        return sum(float(p.replace(",", ".")) for p in expr.split("+") if p)
     except ValueError:
         return None
 
 # ----------------------------
-# Scale definition (percent-based source of truth)
+# Scale definition (percent-based)
 # ----------------------------
 SCALE = [
     ("1",   0, 25),
@@ -65,13 +55,13 @@ SCALE = [
 ]
 
 # ----------------------------
-# Build POINT thresholds (quarter-first)
+# Build POINT thresholds
 # ----------------------------
 def build_thresholds_point_first(max_points: float):
     raw = []
     for grade, p_min, p_max in SCALE:
-        start_pts = round_up_to_quarter(max_points * (p_min / 100))
-        end_pts   = round_down_to_quarter(max_points * (p_max / 100))
+        start_pts = round_up_to_quarter(max_points * p_min / 100)
+        end_pts   = round_down_to_quarter(max_points * p_max / 100)
         raw.append((grade, start_pts, end_pts, p_min, p_max))
 
     raw.sort(key=lambda x: x[1])
@@ -94,43 +84,45 @@ def build_thresholds_point_first(max_points: float):
 
     return fixed
 
-def grade_for_points(earned_pts_q: float, thresholds):
-    if not thresholds:
-        return "N/A"
-
+def grade_for_points(earned_q: float, thresholds):
     for grade, start_pts, end_pts, *_ in thresholds:
-        if start_pts <= earned_pts_q <= end_pts:
+        if start_pts <= earned_q <= end_pts:
             return grade
 
-    first_grade, first_start, *_ = thresholds[0]
-    last_grade, _, last_end, *_ = thresholds[-1]
+    if earned_q < thresholds[0][1]:
+        return thresholds[0][0]
 
-    if earned_pts_q < first_start:
-        return first_grade
-
-    if earned_pts_q > last_end:
-        return last_grade
-
-    for grade, start_pts, *_ in thresholds:
-        if earned_pts_q < start_pts:
-            return grade
-
-    return last_grade
+    return thresholds[-1][0]
 
 # ----------------------------
-# NEW: percent formatting (no trailing .00)
+# Percent formatting
 # ----------------------------
 def percent_info_str(earned_q: float, max_points: float) -> str:
     if not max_points:
         return "0%"
-    percent = (earned_q / max_points) * 100
-    # :g usuwa zbędne zera (np. 75.00 -> 75, 75.50 -> 75.5)
-    return f"{percent:g}%"
+    return f"{(earned_q / max_points) * 100:g}%"
 
 # ----------------------------
 # UI
 # ----------------------------
-st.title("Kalkulator skali ocen (wierność punktom / ćwiartkom)")
+st.title("Kalkulator skali ocen (ćwiartki punktów)")
+
+# 🎨 CSS – fioletowy box procentów
+st.markdown(
+    """
+    <style>
+    .percent-box {
+        background-color: #6f42c1;
+        color: white;
+        padding: 1rem;
+        border-radius: 0.6rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 max_points = st.number_input(
     "Maksymalna liczba punktów",
@@ -145,42 +137,29 @@ st.subheader("Sprawdź ocenę")
 
 possible_points = [x / 4 for x in range(0, int(max_points * 4) + 1)]
 
-st.markdown("### Wprowadzanie punktów")
-
 col1, col2 = st.columns(2)
 
 with col1:
-    earned_select = st.selectbox(
-        "Zdobyte punkty (ręcznie)",
-        possible_points,
-        help="Wybór bezpośredni – tylko ćwiartki"
-    )
+    earned_select = st.selectbox("Zdobyte punkty", possible_points)
 
 with col2:
-    expr_input = st.text_input(
-        "Suma punktow",
-        help="Używaj przecinków jako separatora dziesiętnego"
-    )
+    expr_input = st.text_input("Suma punktów (np. 2+1,5+0,25)")
 
 parsed_sum = parse_points_expression(expr_input)
 
-# 🔽 ZMIANA 1: pokazanie sumy jako "wynik / max_points"
 sum_box = st.empty()
 
 if parsed_sum is not None:
-    shown_sum = min(parsed_sum, max_points)  # co faktycznie wchodzi do obliczeń
-    sum_box.info(f"Suma punkow: **{parsed_sum:g} / {max_points:g} pkt**")
-    earned_raw = shown_sum
+    sum_box.info(f"Suma punktów: **{parsed_sum:g} / {max_points:g}**")
+    earned_raw = min(parsed_sum, max_points)
 else:
-    sum_box.empty()
     earned_raw = float(earned_select)
 
 earned_q = round_to_nearest_quarter(earned_raw)
-
 found_grade = grade_for_points(earned_q, thresholds)
 percent_str = percent_info_str(earned_q, max_points)
 
-# 🔽 ZMIANA 2: wynik w dwóch kolumnach: ocena | procent
+# 🧾 Wynik: ocena | procent
 res_col1, res_col2 = st.columns(2)
 
 with res_col1:
@@ -190,50 +169,32 @@ with res_col1:
         st.success(f"Ocena: **{found_grade}**")
 
 with res_col2:
-    st.info(f"Procent (info): **{percent_str}**")
+    st.markdown(
+        f"""
+        <div class="percent-box">
+            Procent: <strong>{percent_str}</strong>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 st.caption(f"Punkty (ćwiartki): {earned_q:g} / {max_points:g}")
 
-st.subheader("Skala ocen (tabela: punkty → ocena)")
+# ----------------------------
+# Table
+# ----------------------------
+st.subheader("Skala ocen")
 
-rows = []
-for grade, start_pts, end_pts, p_min, p_max in thresholds:
-    rows.append({
-        "Punkty od": start_pts,
-        "Punkty do": end_pts,
+rows = [
+    {
+        "Punkty od": f"{start:g}",
+        "Punkty do": f"{end:g}",
         "Ocena": grade,
         "Procent (źródło)": f"{p_min}–{p_max}%",
-    })
+    }
+    for grade, start, end, p_min, p_max in thresholds
+]
 
 df = pd.DataFrame(rows)
-df["Punkty od"] = df["Punkty od"].map(lambda x: f"{x:g}")
-df["Punkty do"] = df["Punkty do"].map(lambda x: f"{x:g}")
-df = df[["Punkty od", "Punkty do", "Ocena", "Procent (źródło)"]]
 df.index = [""] * len(df)
-
 st.table(df)
-
-# ----------------------------
-# Diagnostics
-# ----------------------------
-with st.expander("Diagnostyka (opcjonalnie)"):
-    if not thresholds:
-        st.warning("Brak poprawnych progów (sprawdź max_points).")
-    else:
-        gaps = []
-        for i in range(len(thresholds) - 1):
-            _, _, end_i, *_ = thresholds[i]
-            _, start_j, _, *_ = thresholds[i + 1]
-            if start_j > end_i + 0.25:
-                gaps.append((end_i + 0.25, start_j - 0.25))
-
-        if gaps:
-            st.warning("Wykryto luki (ćwiartki, które nie należą do żadnej oceny):")
-            st.write(gaps)
-        else:
-            st.success("Brak luk między progami na siatce 0.25.")
-
-        first_start = thresholds[0][1]
-        last_end = thresholds[-1][2]
-        st.write(f"Najniższy próg zaczyna się od: {first_start:g}")
-        st.write(f"Najwyższy próg kończy się na: {last_end:g}")
