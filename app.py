@@ -1,6 +1,7 @@
 import streamlit as st
 import math
 import pandas as pd
+import re
 
 # ----------------------------
 # Helpers: quarter-point grid
@@ -15,8 +16,34 @@ def round_to_nearest_quarter(value: float) -> float:
     return round(value * 4) / 4
 
 # ----------------------------
+# Teacher input parser (comma decimals)
+# ----------------------------
+def parse_points_expression(expr: str) -> float | None:
+    """
+    Parsuje np. '2,25+4,5+1+0,25'
+    Przecinek = separator dziesiętny
+    """
+    if not expr:
+        return None
+
+    expr = expr.replace(" ", "")
+
+    # Dozwolone tylko cyfry, + i przecinki
+    if not re.fullmatch(r"[0-9+,]+", expr):
+        return None
+
+    try:
+        parts = []
+        for part in expr.split("+"):
+            if part == "":
+                continue
+            parts.append(float(part.replace(",", ".")))
+        return sum(parts)
+    except ValueError:
+        return None
+
+# ----------------------------
 # Scale definition (percent-based source of truth)
-# We'll convert it to POINT thresholds on a 0.25 grid (point-first behavior).
 # ----------------------------
 SCALE = [
     ("1",   0, 25),
@@ -39,8 +66,6 @@ SCALE = [
 
 # ----------------------------
 # Build POINT thresholds (quarter-first)
-# Each grade becomes [start_pts, end_pts] inclusive on 0.25 grid.
-# We also enforce monotonic, non-overlapping ranges by construction.
 # ----------------------------
 def build_thresholds_point_first(max_points: float):
     raw = []
@@ -48,25 +73,19 @@ def build_thresholds_point_first(max_points: float):
         start_pts = round_up_to_quarter(max_points * (p_min / 100))
         end_pts   = round_down_to_quarter(max_points * (p_max / 100))
         raw.append((grade, start_pts, end_pts, p_min, p_max))
-    
 
-    # Sort by start just in case (should already be sorted)
     raw.sort(key=lambda x: x[1])
 
-    # Make ranges consistent: remove impossible ranges and prevent overlaps
     fixed = []
     last_end = None
 
     for grade, start_pts, end_pts, p_min, p_max in raw:
-        # If rounding made it impossible, skip it
         if start_pts > end_pts:
             continue
 
-        # If overlap occurs, push start forward to next quarter after last_end
         if last_end is not None and start_pts <= last_end:
             start_pts = round_up_to_quarter(last_end + 0.25)
 
-        # If it becomes impossible after fixing, skip
         if start_pts > end_pts:
             continue
 
@@ -79,7 +98,6 @@ def grade_for_points(earned_pts_q: float, thresholds):
     if not thresholds:
         return "N/A"
 
-    # Normalne trafienie w próg
     for grade, start_pts, end_pts, *_ in thresholds:
         if start_pts <= earned_pts_q <= end_pts:
             return grade
@@ -87,20 +105,16 @@ def grade_for_points(earned_pts_q: float, thresholds):
     first_grade, first_start, *_ = thresholds[0]
     last_grade, _, last_end, *_ = thresholds[-1]
 
-    # Poniżej skali
     if earned_pts_q < first_start:
         return first_grade
 
-    # Powyżej skali
     if earned_pts_q > last_end:
         return last_grade
 
-    # 🔼 LUKA → zaokrąglenie w górę
     for grade, start_pts, *_ in thresholds:
         if earned_pts_q < start_pts:
             return grade
 
-    # Teoretycznie nieosiągalne
     return last_grade
 
 # ----------------------------
@@ -119,12 +133,33 @@ thresholds = build_thresholds_point_first(max_points)
 
 st.subheader("Sprawdź ocenę")
 
-# User can only pick quarter steps
 possible_points = [x / 4 for x in range(0, int(max_points * 4) + 1)]
-earned = st.selectbox("Zdobyte punkty", possible_points)
 
-# Enforce quarter rounding (defensive; selectbox already gives quarters)
-earned_q = round_to_nearest_quarter(float(earned))
+st.markdown("### Wprowadzanie punktów")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    earned_select = st.selectbox(
+        "Zdobyte punkty (ręcznie)",
+        possible_points,
+        help="Wybór bezpośredni – tylko ćwiartki"
+    )
+
+with col2:
+    expr_input = st.text_input(
+        "Suma zadań (np. 2,25+4,5+1)",
+        help="Używaj przecinków jako separatora dziesiętnego"
+    )
+
+parsed_sum = parse_points_expression(expr_input)
+
+if parsed_sum is not None:
+    earned_raw = min(parsed_sum, max_points)
+else:
+    earned_raw = float(earned_select)
+
+earned_q = round_to_nearest_quarter(earned_raw)
 
 percent = (earned_q / max_points) * 100 if max_points else 0.0
 found_grade = grade_for_points(earned_q, thresholds)
@@ -138,7 +173,8 @@ else:
     result_box.success(f"Ocena: **{found_grade}**")
 
 caption_box.caption(
-    f"Punkty (ćwiartki): {earned_q:g} / {max_points:g} | Procent (informacyjnie): {percent:.2f}%"
+    f"Punkty (ćwiartki): {earned_q:g} / {max_points:g} | "
+    f"Procent (informacyjnie): {percent:.2f}%"
 )
 
 st.subheader("Skala ocen (tabela: punkty → ocena)")
@@ -153,8 +189,6 @@ for grade, start_pts, end_pts, p_min, p_max in thresholds:
     })
 
 df = pd.DataFrame(rows)
-
-# Pretty formatting
 df["Punkty od"] = df["Punkty od"].map(lambda x: f"{x:g}")
 df["Punkty do"] = df["Punkty do"].map(lambda x: f"{x:g}")
 df = df[["Punkty od", "Punkty do", "Ocena", "Procent (źródło)"]]
@@ -163,13 +197,12 @@ df.index = [""] * len(df)
 st.table(df)
 
 # ----------------------------
-# Diagnostics (optional but useful)
+# Diagnostics
 # ----------------------------
 with st.expander("Diagnostyka (opcjonalnie)"):
     if not thresholds:
         st.warning("Brak poprawnych progów (sprawdź max_points).")
     else:
-        # Check gaps between ranges on quarter grid
         gaps = []
         for i in range(len(thresholds) - 1):
             _, _, end_i, *_ = thresholds[i]
@@ -183,10 +216,11 @@ with st.expander("Diagnostyka (opcjonalnie)"):
         else:
             st.success("Brak luk między progami na siatce 0.25.")
 
-        # Check coverage endpoints
         first_start = thresholds[0][1]
         last_end = thresholds[-1][2]
         st.write(f"Najniższy próg zaczyna się od: {first_start:g}")
         st.write(f"Najwyższy próg kończy się na: {last_end:g}")
-        st.write("Uwaga: jeśli max_points nie jest wielokrotnością 0.25, skala nadal działa, "
-                 "ale wybór punktów i tak jest ograniczony do ćwiartek.")
+        st.write(
+            "Uwaga: jeśli max_points nie jest wielokrotnością 0.25, "
+            "skala nadal działa, ale wybór punktów jest ograniczony do ćwiartek."
+        )
