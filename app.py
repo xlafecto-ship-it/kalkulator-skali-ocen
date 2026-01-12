@@ -111,6 +111,7 @@ st.title("Kalkulator skali ocen (ćwiartki punktów)")
 st.markdown(
     """
     <style>
+    /* Fioletowy box procentu */
     .percent-box {
         background-color: #6f42c1;
         color: white;
@@ -118,6 +119,12 @@ st.markdown(
         border-radius: 0.6rem;
         font-weight: 600;
         text-align: center;
+    }
+
+    /* Wyśrodkowanie tekstu w alertach Streamlit */
+    .center-alert > div {
+        text-align: center;
+        font-weight: 600;
     }
     </style>
     """,
@@ -150,7 +157,15 @@ parsed_sum = parse_points_expression(expr_input)
 sum_box = st.empty()
 
 if parsed_sum is not None:
-    sum_box.info(f"Suma punktów: **{parsed_sum:g} / {max_points:g}**")
+    sum_box.markdown(
+    f"""
+    <div class="center-alert">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+sum_box.info(f"Suma punktów: **{parsed_sum:g} / {max_points:g}**")
+
     earned_raw = min(parsed_sum, max_points)
 else:
     earned_raw = float(earned_select)
@@ -163,10 +178,12 @@ percent_str = percent_info_str(earned_q, max_points)
 res_col1, res_col2 = st.columns(2)
 
 with res_col1:
+    st.markdown('<div class="center-alert">', unsafe_allow_html=True)
     if found_grade in ("1", "1+"):
         st.error(f"Ocena: **{found_grade}**")
     else:
         st.success(f"Ocena: **{found_grade}**")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with res_col2:
     st.markdown(
